@@ -1,0 +1,73 @@
+!pip install openai-whisper
+!pip install moviepy 
+
+import os
+import whisper
+from moviepy.editor import VideoFileClip
+
+
+directory_path=input("Enter directory address::\n")
+# print(directory_path,os.getcwd())
+
+def video_audio_files(directory_path):
+    audio_formats={".mp3",".wav",".m4a",".wma"}
+    video_formats={".mpeg", "mpeg4",".mp4",".mov",".avi"}
+    audio_files=[]
+    video_files=[]
+
+   
+    if os.path.exists(directory_path): # checks if file exists
+
+        for root,items,files in os.walk(directory_path): # IT RETURN gemerator with 3 tuples root,folder,files
+   
+            for item in files:
+                
+                if item.lower().endswith(tuple(audio_formats)):
+                    audio_files.append(os.path.join(root,item))
+                
+                elif item.lower().endswith(tuple(video_formats)):
+                    video_files.append(os.path.join(root,item))
+
+    return audio_files, video_files
+
+def extract_audio_from_video(video_files):
+    
+    count=0
+    for item in video_files:
+        clip=VideoFileClip(item)
+        mp3_file_path=os.path.join(directory_path,f"{os.path.basename(item)}.mp3")
+        clip.audio.write_audiofile(mp3_file_path)
+
+        print("Audio extracted successfully from Video Fles::",f"{os.path.basename(item)}.mp3")
+        clip.close()
+        audio_files.append(mp3_file_path)
+        count+=1
+    print("Total Audio Files extracted::",count)
+    print("\n")
+
+   
+
+def convert_audio_to_text(audio_files,directory_path):
+    
+    model = whisper.load_model("tiny")
+    
+    for item in audio_files:
+        output_folder=os.path.join(directory_path,"output")
+        os.makedirs(output_folder,exist_ok=True)
+        
+        with open(os.path.join(output_folder,f"{os.path.basename(item)}.txt"),"w") as file:
+            result = model.transcribe(item)
+            file.write(result["text"])
+            print("Audio converted to text successfully::",f"{os.path.basename(item)}.txt")
+            file.close()
+
+audio_files,video_files=video_audio_files(directory_path)
+extract_audio_from_video(video_files)
+convert_audio_to_text(audio_files,directory_path)
+
+
+[print("Audio Files:::",(i)) for i in enumerate(audio_files)]
+print("Total Audio Files Found::",len(audio_files))
+print("\n")
+[print("Video Files:::",(i)) for i in enumerate(video_files)]
+print("Total Video Files Found:::",len(video_files))
